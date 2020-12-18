@@ -4,72 +4,60 @@ import java.util.*;
 
 public class QuadTree {
 
-    private QuadTree northWest;
-    private QuadTree northEast;
-    private QuadTree southEast;
-    private QuadTree southWest;
-
-    private final QuadTree father;
-
+    private QuadTree northWest, northEast, southEast, southWest, father;
     private Color color;
     private boolean leaf;
 
-    private final String imagePath;
-    private String compressImagePath;
+    private ImagePNG image;
+    private ImagePNG compressImage;
 
     //Constructor 1
-    public QuadTree(String imagePath) throws IOException {
-        this.northWest          = null;
-        this.northEast          = null;
-        this.southEast          = null;
-        this.southWest          = null;
+    public QuadTree(ImagePNG image) {
+        this.northWest      = null;
+        this.northEast      = null;
+        this.southEast      = null;
+        this.southWest      = null;
 
-        this.father             = null;
+        this.father         = null;
 
-        this.leaf               = false;
+        this.leaf           = false;
 
-        this.color              = null;
+        this.color          = null;
 
+        this.image          = image;
+        this.compressImage  = null;
 
-
-        this.imagePath          = constructionPath(imagePath);
-
-        ImagePNG image          = Menu.loadImagePNG(imagePath);
-
-        this.compressImagePath  = imagePath;
-
-        this.createQuadTree(image, imagePath, 0, 0, image.width());
+        this.createQuadTree(image, 0, 0, image.width());
 
     }
 
     //Constructor 2
-    private QuadTree(ImagePNG image, String imagePath, int x, int y, int sizeImage, QuadTree father) {
-        this.northWest          = null;
-        this.northEast          = null;
-        this.southEast          = null;
-        this.southWest          = null;
+    private QuadTree(ImagePNG image, int x, int y, int sizeImage, QuadTree father) {
+        this.northWest      = null;
+        this.northEast      = null;
+        this.southEast      = null;
+        this.southWest      = null;
 
-        this.father             = father;
+        this.father         = father;
 
-        this.leaf               = false;
+        this.leaf           = false;
 
-        this.color              = null;
+        this.color          = null;
 
-        this.imagePath          = imagePath;
-        this.compressImagePath  = imagePath;
+        this.image          = image;
+        this.compressImage  = null;
 
-        this.createQuadTree(image, imagePath, x, y, sizeImage);
+        this.createQuadTree(image, x, y, sizeImage);
 
     }
 
     /** @role : Create the complete tree of the image.
-     *
      *  @param image image in 2^N format, with N = number of pixels per side.
      *  @param x position x of pixel.
      *  @param y position y of pixel.
      *  @param sizeImage number pixel per side.
      */
-    private void createQuadTree(ImagePNG image, String imagePath, int x, int y, int sizeImage) {
+    private void createQuadTree(ImagePNG image, int x, int y, int sizeImage) {
 
         if (sizeImage == 1) {
             this.color = image.getPixel(x, y);
@@ -78,20 +66,25 @@ public class QuadTree {
         } else {
             int newSizeImage = sizeImage / 2; //Calculation of new size of childrens (North West, North East, South East and South West).
 
+            int newXNW = x;                 //Coordinate X of cutting North West.
+            int newYNW = y;                 //Coordinate Y of cutting North West.
+
             int newXNE = x + newSizeImage;  //Coordinate X of cutting North East.
+            int newYNE = y;                 //Coordinate Y of cutting North East.
 
             int newXSE = x + newSizeImage;  //Coordinate X of cutting South East.
             int newYSE = y + newSizeImage;  //Coordinate Y of cutting South East.
 
+            int newXSW = x;                 //Coordinate X of cutting South West.
             int newYSW = y + newSizeImage;  //Coordinate Y of cutting South West.
 
-            this.northWest = new QuadTree(image, imagePath, x, y, newSizeImage, this); //Recursive of cutting North West.
-            this.northEast = new QuadTree(image, imagePath, newXNE, y, newSizeImage, this); //Recursive of cutting North East.
-            this.southEast = new QuadTree(image, imagePath, newXSE, newYSE, newSizeImage, this); //Recursive of cutting South East.
-            this.southWest = new QuadTree(image, imagePath, x, newYSW, newSizeImage, this); //Recursive of cutting South West.
+            this.northWest = new QuadTree(image, newXNW, newYNW, newSizeImage, this); //Recursive of cutting North West.
+            this.northEast = new QuadTree(image, newXNE, newYNE, newSizeImage, this); //Recursive of cutting North East.
+            this.southEast = new QuadTree(image, newXSE, newYSE, newSizeImage, this); //Recursive of cutting South East.
+            this.southWest = new QuadTree(image, newXSW, newYSW, newSizeImage, this); //Recursive of cutting South West.
 
 
-            if (this.northWest.isLeaf() && this.northEast.isLeaf() && this.southEast.isLeaf() && this.southWest.isLeaf()) { //lossless compression.
+            if (this.northWest.isLeaf() && this.northEast.isLeaf() && this.southEast.isLeaf() && this.southWest.isLeaf()) {
                 if (this.northWest.getColor().equals(this.northEast.getColor()) &&
                     this.northEast.getColor().equals(this.southEast.getColor()) &&
                     this.southEast.getColor().equals(this.southWest.getColor()) &&
@@ -169,40 +162,35 @@ public class QuadTree {
 
     // ----------------------------------------------- VERIFICATION -----------------------------------------------
 
-    /** @role checking if the node is a father of 4 leaves and if it is not a leaf.
-     *
-     *  @return boolean
-     */
     public boolean verificationBound() {
         return !this.isLeaf() && this.getNorthEast().isLeaf() && this.getNorthWest().isLeaf() && this.getSouthWest().isLeaf() && this.getSouthEast().isLeaf();
     }
 
     // ----------------------------------------------- TO STRING -----------------------------------------------
 
-    /** @role Display tree in docs format.
-     *
+    /** @role : Display tree in docs format.
      *  @return display in format String.
      */
     public String toString() {
-        String display = "(";
+        String display = " ";
 
         if (this.leaf) {
             return ImagePNG.colorToHex(this.color);
         } else {
-            display += "" + this.northWest.toString() + " ";
-            display += "" + this.northEast.toString() + " ";
-            display += "" + this.southEast.toString() + " ";
-            display += "" + this.southWest.toString();
+            display += "(" + this.northWest.toString() + ") ";
+            display += "(" + this.northEast.toString() + ") ";
+            display += "(" + this.southEast.toString() + ") ";
+            display += "(" + this.southWest.toString() + ") ";
 
-            return display + ")";
+            return display + " ";
         }
     }
 
     // ----------------------------------------------- COLORIMETRIC DIFFERENCE -----------------------------------------------
 
-    /** @role : Average color between north east, north west, south west and south east.
-     *
-     *  @return average color.
+    /**
+     * Average color between north east, north west, south west and south east.
+     * @return average color.
      */
     public Color colorimetricAverage() {
         int Rm = (this.northWest.getColor().getRed()   + this.northEast.getColor().getRed()   + this.southEast.getColor().getRed()   + this.southWest.getColor().getRed()) / 4; //Average red color between north east, north west, south west and south east.
@@ -213,8 +201,7 @@ public class QuadTree {
 
     }
 
-    /** @role Calculate the colorimetric difference.
-     *
+    /** @role : Calculate the colorimetric difference.
      *  @param average average color.
      *  @return calcule.
      */
@@ -225,9 +212,8 @@ public class QuadTree {
     }
 
 
-    /** @role choose the maximum direction between the 4 directions.
-     *
-     *  @return choose the maximum direction between south and north.
+    /** @role : choose the maximum direction between the 4 directions.
+     *  @return //choose the maximum direction between south and north.
      */
     public int maxColorimetricDifference() {
         Color average = this.colorimetricAverage();
@@ -237,48 +223,38 @@ public class QuadTree {
         return Math.max(maxNorth, maxSouth);
     }
 
-    /** @role Calculate the maximum colorimetric for a father of 4 leaves.
-     *
-     *  @param delta limit value of the colorimetric difference.
-     *  @param tree Father of 4 sheets to calculate the maximum colorimetric difference.
-     */
-    private void maxColorimetricDifference(int delta, QuadTree tree) {
-        int colorimetricDifference = tree.maxColorimetricDifference();
-
-        if (colorimetricDifference <= delta) {
-            Color newColor =  tree.colorimetricAverage();
-
-            tree.setColor(newColor);
-
-            tree.setNorthWest(null);//All of sons becomes null
-            tree.setNorthEast(null);
-            tree.setSouthWest(null);
-            tree.setSouthEast(null);
-
-
-            tree.setLeaf(true);
-        }
-    }
-
     // ----------------------------------------------- COMPRESS DELTA -----------------------------------------------
 
-    /** @role call version of compressDelta for the menu.
-     *
-     *  @param delta limit value of the colorimetric difference.
-     */
     public void compressDelta(int delta) {
         compressDelta(delta, this);
     }
-    /** @role Go through the tree and compress if the colorimetric interpretation is lower than the delta.
-     *
-     *  @param delta limit value of the colorimetric difference.
-     *  @param tree Shaft to compress
+    /** @role :
+     *  @param delta
+     *  @param tree
      */
     private void compressDelta(int delta, QuadTree tree) {
 
-        if (!tree.isLeaf()) {
+        if (tree.isLeaf()) {
+            return;
+        } else {
             if (tree.verificationBound()) { //If all of sons are leaf
-                maxColorimetricDifference(delta, tree);
+
+                int colorimetricDifference = tree.maxColorimetricDifference();
+
+                if (colorimetricDifference <= delta) {
+                    Color newColor =  tree.colorimetricAverage();
+
+                    tree.setColor(newColor);
+
+                    tree.setNorthWest(null);//All of sons becomes null
+                    tree.setNorthEast(null);
+                    tree.setSouthWest(null);
+                    tree.setSouthEast(null);
+
+
+                    tree.setLeaf(true);
+                }
+
             } else {
                 compressDelta(delta, tree.getNorthWest());
                 compressDelta(delta, tree.getNorthEast());
@@ -286,78 +262,104 @@ public class QuadTree {
                 compressDelta(delta, tree.getSouthWest());
 
                 if (tree.verificationBound()) { //If all of sons are leaf
-                    maxColorimetricDifference(delta, tree);
+
+                    int colorimetricDifference = tree.maxColorimetricDifference();
+
+                    if (colorimetricDifference <= delta) {
+                        Color newColor = tree.colorimetricAverage();
+
+                        tree.setColor(newColor);
+
+                        tree.setNorthWest(null);//All of sons becomes null
+                        tree.setNorthEast(null);
+                        tree.setSouthWest(null);
+                        tree.setSouthEast(null);
+
+
+                        tree.setLeaf(true);
+                    }
                 }
            }
         }
     }
 
 
+
     // ----------------------------------------------- COMPRESS PHI -----------------------------------------------
 
-    /** @role call version of compressPhi for the menu.
-     *
-     *  @param phi number of sheets that must remain at the end.
-     */
     public void compressPhi(int phi) {
         compressPhi(this, phi);
     }
 
-
-    /** @role Compress the number of leaves until reaching phi.
-     *
-     *  @param tree Shaft to compress
-     *  @param phi leaf limit to be reached.
+    /**
+     * Compress the number of leaves until reaching phi.
+     * @param tree Shaft to compress
+     * @param phi leaf limit to be reached.
      */
     private void compressPhi(QuadTree tree, int phi) {
         int numberLeaf = tree.numberLeafs(tree); //Calculate numbers leaf in quadtree.
 
         Comparator<QuadTree> comparator = new QuadTreeComparator();
-        TreeSet<QuadTree> listLeaf = new TreeSet<>(comparator);
+        TreeSet<QuadTree> listLeaf = new TreeSet<QuadTree>(comparator);
 
-        this.compressPhiTree(tree, listLeaf); //fill listLeaf with leafs.
+        //ArrayList<QuadTree> listLeaf = new ArrayList<>();
+        //ArrayList<QuadTree> listNewLeaf = new ArrayList<>();
 
-        while (phi < numberLeaf) {
+        this.compressPhiTri(tree, listLeaf); //fill listLeaf with leafs.
+
+         //initialize comparator of QuadTree.
+
+        //Collections.sort(listLeaf, comparator);//Sort automatically listLeaf.
+
+        while (phi < numberLeaf && listLeaf.size() > 0) {
 
             QuadTree saveTree = listLeaf.first();
             listLeaf.remove(saveTree);
+            // Displaying the values after iterating through the set
+            //System.out.println("The iterator values are: ");
 
-            crushLeaf(saveTree);//and crush (see crush fonction).
+            //Output the first element of the array
 
-            if (saveTree.getFather() != null && saveTree.getFather().verificationBound()) {
-                listLeaf.add(saveTree.getFather()); //Add in new listLeaf if the father has as a result of overwriting 4 sons.
+            if (saveTree != null) {
+                saveTree = this.crushLeaf(saveTree); //and crush (see crush fonction).
+
+                 //Delete elemente of array.
+
+
+                if (saveTree.getFather() != null && saveTree.getFather().verificationBound()) {
+                    listLeaf.add(saveTree.father); //Add in new listLeaf if the father has as a result of overwriting 4 sons.
+                }
+                numberLeaf -= 3; //the number of leaves decreases by 3 because 4 leaves disappear but 1 new one is created by the father (4 - 1 = 3).
+
             }
-
-            numberLeaf -= 3;
         }
     }
 
 
-    /** @role Adds all the leaves of a tree to a list.
-     *
-     *  @param tree Quadtree
-     *  @param list list of leafs.
+    /**
+     * Adds all the leaves of a tree to a list.
+     * @param tree
+     * @param list list of leafs.
      */
-    private void compressPhiTree( QuadTree tree, TreeSet<QuadTree> list) {
+    private void compressPhiTri( QuadTree tree, TreeSet<QuadTree> list) {
         if (tree != null) {
             if (tree.verificationBound()) {
                 list.add(tree);
             } else {
-                tree.compressPhiTree(tree.getNorthWest(), list);
-                tree.compressPhiTree(tree.getNorthEast(), list);
-                tree.compressPhiTree(tree.getSouthEast(), list);
-                tree.compressPhiTree(tree.getSouthWest(), list);
+                tree.compressPhiTri(tree.getNorthWest(), list);
+                tree.compressPhiTri(tree.getNorthEast(), list);
+                tree.compressPhiTri(tree.getSouthEast(), list);
+                tree.compressPhiTri(tree.getSouthWest(), list);
             }
         }
     }
 
-    // ----------------------------------------------- LEAFS OPERATION -----------------------------------------------
-
-    /** @role turns a father of 4 leaves into leaves.
+    /**
      *
-     *  @param tree Father of 4 leaves.
+     * @param tree
+     * @return
      */
-    private void crushLeaf(QuadTree tree) {
+    private QuadTree crushLeaf(QuadTree tree) {
         Color newColor =  tree.colorimetricAverage();
 
         tree.setColor(newColor);
@@ -370,13 +372,13 @@ public class QuadTree {
 
         tree.setLeaf(true);
 
+        return tree;
     }
 
 
-        /** @role This function count the number of leaves in the tree.
-         *
-         *  @param tree QuadTree tree.
-         *  @return the number of leaves in the tree.
+        /** @role : This function count the number of leaves in the tree
+         * @param tree
+         * @return
          */
     public int numberLeafs(QuadTree tree){
         if(tree != null) {
@@ -391,32 +393,33 @@ public class QuadTree {
     }
 
     // ----------------------------------------------- SAVE PNG -----------------------------------------------
-    /** @role Saves the tree in png format. Rewrite the image from the tree. By default saved in the SavePNG folder otherwise specify the path.
+
+
+    /**
      *
-     *  @param filename file name or save path.
-     *  @throws IOException Exception if the file or path does not exist.
+     * @param filename
+     * @throws IOException
      */
     public void savePNG(String filename) throws IOException {
-        ImagePNG image = Menu.loadImagePNG(this.imagePath);
-         this.compressImagePath = constructionPathCompress(filename);
+        ImagePNG imageClone = this.image.clone();
+        this.compressionPNG(imageClone, this, 0, 0, imageClone.width());
 
-        this.compressionPNG(image, this, 0, 0, image.width());
+        this.compressImage = imageClone;
 
-        image.save(this.compressImagePath);
+        imageClone.save(filename);
     }
 
-
-    /** @role Recursively cycle through the tree and overwrite identical pixel packets with the help of crushPixelPNG.
+    /**
      *
-     *  @param image image to compress to PNG.
-     *  @param arbre Tree to parcoured.
-     *  @param x position X in image.
-     *  @param y position Y in image.
-     *  @param sizeImage number of pixels on one side of the image.
+     * @param image
+     * @param arbre
+     * @param x
+     * @param y
+     * @param sizeImage
      */
     private void compressionPNG(ImagePNG image, QuadTree arbre, int x, int y, int sizeImage) {
         if (arbre.isLeaf()) {
-            crushPixelPNG(image, x, y, sizeImage, arbre.getColor());
+            compressionBlockPNG(image, x, y, sizeImage, arbre.getColor());
         } else {
             int newSizeImage = sizeImage / 2; //Calculation of new size of childrens (North West, North East, South East and South West).
 
@@ -434,15 +437,24 @@ public class QuadTree {
         }
     }
 
-    /** @role overwrite pixels of identical packet.
-     *
-     *  @param image image to overwrite.
-     *  @param x top left position x of the pixel to be overwritten
-     *  @param y top left position y of the pixel to be overwritten.
-     *  @param sizeImage pixel packet size to be overwritten.
-     *  @param rgb pixel color.
-     */
-    private void crushPixelPNG(ImagePNG image, int x, int y, int sizeImage, Color rgb) {
+    ///TODO CHANGER NOM FONCTION
+    private void compressionBlockPNG(ImagePNG image, int x, int y, int sizeImage, Color rgb) {
+
+        /*if (x == x + sizeImage) {
+            //image.setPixel(x, y, new Color(0,0,0));
+            //compressionBlockPNG(image, x, y + 1, sizeImage, maxXY, rgb);
+        } else if (y == y + sizeImage) {
+            //image.setPixel(x, y, new Color(0,0,0));
+            //compressionBlockPNG(image, x + 1, y, sizeImage, maxXY, rgb);
+        } else {
+            System.out.println("X = " + x + " / Y = " + y + " block" );
+
+            image.setPixel(x, y, new Color(0, 0, 0));
+
+            compressionBlockPNG(image, x + 1, y, sizeImage, rgb);
+            compressionBlockPNG(image, x, y + 1, sizeImage, rgb);
+        }*/
+
         for (int i = x ; i < x + sizeImage ; ++i) {
             for (int j = y ; j < y + sizeImage ; j++) {
                 image.setPixel(i, j, rgb);
@@ -450,12 +462,8 @@ public class QuadTree {
         }
     }
 
-    // ----------------------------------------------- SAVE TXT -----------------------------------------------
 
-    /** @role Saves the QuadTree in SaveTXT in written form.
-     *
-     *  @param location image path.
-     */
+
     public void saveTXT(String location) {
         String quadTreeTXT = this.toString();
 
@@ -470,48 +478,26 @@ public class QuadTree {
         }
     }
 
-    // ----------------------------------------------- EQM -----------------------------------------------
-
-    /** @role Display of EQM values.
-     *
-     *  @throws IOException Exception if the path or image does not exist.
-     */
-    public void EQM() throws IOException {
-        ImagePNG imageOrigine = Menu.loadImagePNG(this.imagePath);
-        ImagePNG imageCompress = new ImagePNG(this.compressImagePath);
-
-        File imageOrigineFile    =    new File(this.imagePath);
-        File imageCompressFile   =    new File(this.compressImagePath);
-
-        double EQMImage = ImagePNG.computeEQM(imageOrigine,imageCompress);
-        double sizeImageComparaison = Math.ceil(10000.0*imageCompressFile.length() / imageOrigineFile.length())/100.0;
-
-        System.out.println("Image: taille = " + sizeImageComparaison + "% / qualité = " + EQMImage + "%");
+    public double EQM() {
+        return ImagePNG.computeEQM(this.image, this.compressImage);
     }
 
-    /** @role build the path from the pngs folder if it isn't.
-     *
-     *  @param path unbuilt path.
-     *  @return build path.
-     */
-    private String constructionPath(String path) {
-
-        if (!path.contains("\\") && !path.contains(".png")) {
-            return "pngs/" + path + ".png";
-        } else if (!path.contains("/")){
-            return "pngs/" + path;
-        } else {
-            return path;
-        }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        QuadTree quadTree = (QuadTree) o;
+        return leaf == quadTree.leaf &&
+                Objects.equals(northWest, quadTree.northWest) &&
+                Objects.equals(northEast, quadTree.northEast) &&
+                Objects.equals(southEast, quadTree.southEast) &&
+                Objects.equals(southWest, quadTree.southWest) &&
+                Objects.equals(color, quadTree.color) &&
+                Objects.equals(image, quadTree.image);
     }
-    private String constructionPathCompress(String path) {
 
-        if (!path.contains("\\") && !path.contains(".png")) {
-            return "SavePNG/" + path + ".png";
-        } else if (!path.contains("/")){
-            return "SavePNG/" + path;
-        } else {
-            return path;
-        }
+    @Override
+    public int hashCode() {
+        return Objects.hash(northWest, northEast, southEast, southWest, color, leaf, image);
     }
 }

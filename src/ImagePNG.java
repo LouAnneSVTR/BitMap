@@ -1,5 +1,3 @@
-
-
 import java.io.File;
 import java.io.IOException;
 import java.awt.Color;
@@ -80,4 +78,64 @@ public class ImagePNG
         return Math.ceil(10000*(1-eqm))/100.0; // percentage rounded to the hundredth
     }
 
-   }
+    /**************** À RETIRER DANS VOTRE PROJET *********************/
+    /** Code de démonstration de l'usage de cette classe **/
+    /*public static void main( String[] args )
+    {
+        try {
+            if (args.length!=1) throw new IllegalArgumentException("Préciser le nom (et chemin) d'un unique fichier png en paramètre");
+
+            ImagePNG png = new ImagePNG(args[0]);
+            ImagePNG pngNB = new ImagePNG(png); // une copie
+            ImagePNG pngR = new ImagePNG(png); // une autre copie
+
+            // 1. MODIFICATION DES COULEURS
+
+            Color col,nb,red;
+            int r,g,b,l;
+            for (int x=0 ; x<png.width(); x++)
+            {
+                for (int y=0 ; y<png.height() ; y++)
+                {
+                    // extraction de la couleur du pixel (x,y)
+                    col = png.getPixel(x,y);
+                    // modification de la couleur
+                    r = col.getRed();
+                    g = col.getGreen();
+                    b = col.getBlue();
+                    l = (r+g+b)/3;
+                    nb = new Color(l,l,l);
+                    red = new Color(l,0,0);
+                    // inscription de la nouvelle couleur des pixels (x,y)
+                    pngNB.setPixel(x,y,nb);
+                    pngR.setPixel(x,y,red);
+                }
+            }
+            png.save(args[0]);
+            pngNB.save(args[0]+"NB");
+            pngR.save(args[0]+"R");
+
+            // 2. COMPARAISON DES RÉSULTATS
+
+            // calcul des indices de similarité
+            double siNB = ImagePNG.computeEQM(png,pngNB);
+            double siR = ImagePNG.computeEQM(png,pngR);
+
+            // chargement des fichiers
+            File fic = new File(args[0]);
+            File ficNB =  new File(args[0]+"NB");
+            File ficR =  new File(args[0]+"R");
+
+            // rapport des tailles
+            double wNB = Math.ceil(10000.0*ficNB.length() / fic.length())/100.0;
+            double wR = Math.ceil(10000.0*ficR.length() / fic.length())/100.0;
+
+            // affichage des critères
+            System.out.println("NB: taille="+wNB+"% / qualité="+siNB+"%");
+            System.out.println("R: taille="+wR+"% / qualité="+siR+"%");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }*/
+}
